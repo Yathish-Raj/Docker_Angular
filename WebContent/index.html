@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html data-ng-app = "userApp">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+</head>
+<body data-ng-controller="userController"> 
+    <h1>Demo User Information:</h1>
+    <form data-ng-submit="submitUserForm()" >
+            <label for="firstName" >First Name: </label><br />
+            <input type="text" id="firstName" data-ng-model="user.firstName" /> <br />
+
+            <label for="lastName">Last Name</label><br />
+                <input type="text" id="lastName" data-ng-model="user.lastName" /> <br />
+                
+            <label for="dob" >DoB</label><br />
+                <!-- <input type="date" id="dob" data-ng-model="user.DoB" /> <br /><br /> -->
+                <input type="date" id="dob" data-ng-model="user.DoB" /> <br /><br />                
+
+            <label for="gender" >Gender</label> <br />
+                <select id="gender" data-ng-model="user.gender">
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select><br /> <br />
+                       
+        <input type="submit" value="Submit" /> 
+        <input type="reset" data-ng-click="resetForm()" value="Reset" /> <br />		
+    </form>
+    <script>
+        
+        var userApp = angular.module('userApp', []);
+        
+        userApp.controller("userController", function ($scope, $http) {
+            $scope.originalUser = {
+                firstName: null,
+                lastName: null,
+                DoB: null,
+                gender: null                
+            };
+            
+            $scope.user = angular.copy($scope.originalUser);
+            
+            $scope.submitUserForm = function () {    
+            	               
+                $http({
+                    method: 'POST',
+                    /* For Local 
+                    url: 'http://localhost:8080/demouserapp/saveuser', */
+                    /* For AWS */
+                    url: 'http://mydemousermwwar.us-east-1.elasticbeanstalk.com/demouserapp/saveuser',
+                    data: {
+                		'firstName': $scope.user.firstName,
+                		'lastName': $scope.user.lastName,
+                		'dob': $scope.user.DoB,
+                		'gender': $scope.user.gender
+                	},
+                    headers: {'Content-Type': 'application/json'}
+                })
+                .then(
+                    function onSuccess(response){
+                    	$scope.myResponse = response.data;
+                    	if(response.data[0].presentInDb == false){
+                    		alert("User information saved to Database.");
+                    	}
+                    	else if(response.data[0].presentInDb == true){
+                    		alert("User information already present in the Database. \nEither First Name, Last Name or Both Names are matching"+
+                    				"\n\nFirstName: "+ response.data[0].firstName + " and LastName: "+response.data[0].lastName);
+                    	}
+                    }, 
+                    function onError(response){
+                    	$scope.myErrorResponse = response.statusText;
+                    	alert("Error while saving user info.");
+                    });
+            };            
+            $scope.resetForm = function () {
+                $scope.user = angular.copy($scope.OriginalUser);
+            };
+    });
+    </script>    
+</body>
+</html>
